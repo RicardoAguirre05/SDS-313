@@ -1,0 +1,217 @@
+---
+title: 'Project 1: Super Bowl Commercial Statistical Analysis'
+author: "Ricardo Aguirre"
+date: "2024-09-24"
+output:
+  html_document:
+   toc: true
+   toc_float:
+      collapsed: true
+   theme: simplex
+---
+
+```{r setup, include=FALSE}
+
+# Sets global parameters
+
+knitr::opts_chunk$set( echo = FALSE,
+                       eval = TRUE,
+                       warning = FALSE,
+                       message = FALSE,
+                       fig.align = "center"
+                      )
+
+# Imports Data set and libraries
+
+setwd("SDS 313")
+
+Data <- read.csv("Project1_SuperBowlAds(1).csv")
+
+library(tidyverse)
+library(scales)
+
+```
+
+<p align="center">
+
+<img src="https://projects.fivethirtyeight.com/super-bowl-ads/images/SUPER-BOWL-ADS-Topper.png?v=7e5791e9" alt="Super Bowl Commercials" width="450"/>
+
+</p>
+
+Caption: Artwork created by Emily Scherer depicting past Super Bowl commercials
+
+*Image Source: [<https://projects.fivethirtyeight.com/super-bowl-ads/images/SUPER-BOWL-ADS-Topper.png?v=7e5791e9>]
+
+### Introduction:
+
+The data set used for this analysis comes from FiveThirtyEight and includes a comprehensive collection of Super Bow commercials since 2000. It includes several characteristics of these advertisements, including their view counts, like counts, and features such as the presence of celebrities, humor, and danger. Thus, this data set provides insights into consumer engagement with Super Bowl commercials
+
+This report will focus primarily on view count, the primary outcome variable of interest, measuring how many times each commercial has been viewed on YouTube. I will investigate three predictor variables: like count(numeric variable representing the number of likes each ad received on YouTube), celebrity presence(categorical variable indicating whether a celebrity appears in the ad), and humor(categorical variable describing whether the ad is considered funny)
+
+*Note: Categorical data such as humor is subjective which can influence the outcome of the data
+
+### Outcome Variable: SuperBowl Commercial Viewership
+
+```{r}
+
+#Calculates general statistical values for accuracy
+
+Stats <- Data |>
+  
+# Creates new variable to reduce skew via log function
+  
+mutate(log_viewcount = log(view_count)) |>
+# Calculates the median log view count
+  
+summarize(
+  median_viewcount = median(log_viewcount,na.rm = TRUE),
+  
+  max_viewcount = max(log_viewcount, na.rm = TRUE),
+  
+  min_viewcount = min(log_viewcount, na.rm = TRUE)
+  
+  
+  )
+
+Data |>
+
+  
+mutate(log_viewcount = log(view_count)) |>
+
+ggplot(aes(x= log_viewcount)) +
+    #Creates histrogram to visualize data
+    geom_histogram(fill = "deepskyblue3", color = "black", binwidth = 0.5)+
+      labs(
+        
+            title = "Super Bowl Commerical View Count",
+            
+            x = "Log View Count",
+            
+            y = "Number of Commercials"
+        
+           ) +
+  
+        theme_bw() +
+    
+        theme(
+          
+          # Centers the title's horizontal orientation, increases size, and bold text 
+          
+          plot.title = element_text(hjust = 0.5, size = 15,  face = "bold")
+          
+             )
+
+```
+
+To begin this report, we'll analyze the distribution of Super Bowl view counts(**Note:View counts will be logarithmic in this investigation to reduce skew**). The distribution of the histogram appears approximately symmetrical, with a peak towards the center. The **\`r median(log_viewcount)'** is approximately 10.5, indicating that half of the Superbowl commercials have a viewership lower than this value. The mode is approximately 11 log view counts with approximately 27 Super Bowl commercials reporting this value, suggesting this number appears frequently within the data set. The **'r max(log_viewcount)'** within the data set is approximately 19 while the **'r min(log_viewcount)'** is 2.3, making the range approximately 9. This distribution suggests a wide array of Super Bowl commerical viewership counts.
+
+### Bivariate Analyses
+
+### Predictor Variable #1: Celebrities
+
+```{r}
+Data |>
+  
+  #Creates variable to reduce skew via log function
+  
+  mutate(log_viewcount = log(view_count)) |>
+
+  #Creates 
+  ggplot(aes(x = as.factor(celebrity), y = log_viewcount)) +
+  
+   geom_boxplot(fill = "cyan3", color = "darkcyan") +
+  
+    labs (
+          
+          title = "Celebrity influence on Superbowl Commerical Viewcount",
+          
+          x = "Celebrity",
+          
+          y = " Log View Count"
+        
+         ) +
+  
+    theme_bw()+
+  
+    theme (
+      
+       plot.title = element_text(hjust = 0.5, size = 15, face = "bold"))
+
+```
+
+The above box plots display how the presence of celebrities impacts a Super Bowl commercial's viewership. According to the graph, celebrities' presence and absence appear to have the same median value at approximately 11 log views. The upper quartiles are similar, with values just below 12.5 log views. The lower quartiles are also very similar with the absence of non celebrities being slightly higher than celebrities both around 8 log view counts. The box of the celebrity data is slightly larger, representing the middle 50% of the data, indicating greater variability in log view counts for celebrity ads. There are several outliers within the data set with the celebrity data set having more outliers. This might suggest that while celebrity log view counts are slightly higher, there are instances of exceptionally high viewership. Thus, celebrity presence in Super Bowl commercials appears to positively impact viewership with a higher median, and wider range of counts. However, the variability and presence of outliers suggest that while celebrities generally increase the view count, commercials without celebrities can still perform well.
+
+### Predictor Variable2: Likes
+
+```{r}
+
+Correlation <- Data |> 
+  
+    summarise(correlation = cor(view_count, like_count, use = "complete.obs"))
+
+print(Correlation)
+
+Data |>
+  
+  mutate(log_viewcount = log(view_count)) |>
+  
+  mutate(log_likecount = log(like_count)) |>
+
+  ggplot(aes(x = log_viewcount, y = log_likecount)) +
+      
+    geom_jitter(alpha = 0.7, size = 2.0)+
+  
+      geom_smooth(method = lm, se = FALSE, color = "red") +
+  
+      labs(
+        
+        title = "Correlation Between Like and View Count",
+        
+        x = "Log View Count",
+        
+        y = "Log Like Count"
+        
+           ) +
+      
+    theme_bw() +
+  
+      theme(
+        
+          plot.title = element_text(hjust = 0.5, size = 15, face = "bold"))
+
+```
+
+
+The above scatter plot depicts the correlation between log like and view count. According to the graph, there appears to be a strong correlation between like and view count, as the graph has a positive linear spread(up right). The trend line displayed depicts the positive correlation between the two numeric variables , suggesting that a Super Bowl commercials like count is a good indicator of a higher viewership. To confirm these observations, a **`r cor(view_count, like_count)`** to test the correlation strength between the two variables( Cor tests range from -1 to 1, 1: indicates a **perfect positive correlation** -1: indicates a **perfect negative correlation**).
+
+### Predictor Variable 3: Humour
+
+```{r}
+
+
+Data |>
+  
+mutate(log_viewcount = log(view_count)) |>
+
+ggplot(aes(x = as.factor(funny), y = log_viewcount)) +
+  
+    geom_boxplot(fill= "cyan3", color = "darkcyan") + 
+  
+      labs(
+        
+          title = "Comparison of Log View Count Based on Humour",
+          
+          x = "Funny",
+          
+          y = " Log View Count"
+
+          ) +
+  
+      theme_bw() +
+  
+      theme(
+        
+        plot.title = element_text(hjust = 0.5, size = 15, face = "bold")
+      
+           )
+```
